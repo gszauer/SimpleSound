@@ -23,8 +23,8 @@ namespace SimpleSound {
 		fpSqrt sqrt;
 	};
 
-	Device* InitWithSamples(Platform& platform, unsigned int sampleCount, unsigned int numChannels, void* hwnd);
-	Device* InitWithTime(Platform& platform, unsigned int bufferLengthMs, unsigned int numChannels, void* hwnd);
+	Device* InitWithSamples(Platform& platform, unsigned int sampleCount, unsigned int numChannels, void* platformSpecificPointer);
+	Device* InitWithTime(Platform& platform, unsigned int bufferLengthMs, unsigned int numChannels, void* platformSpecificPointer);
 	void Shutdown(Device* device);
 	const char* GetLastError(Device& device);
 	PCMData* LoadWavFromMemory(Device& device, void* data, unsigned int bytes);

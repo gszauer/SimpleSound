@@ -41,7 +41,7 @@ File LoadFile(const char* path) {
 	return result;
 }
 
-#if 1
+#if 0
 struct UserData {
 	SimpleSound::Device* device;
 	SimpleSound::Platform platform;

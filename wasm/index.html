@@ -1,0 +1,108 @@
+<!doctype html>  
+<html lang="en">  
+    <head>  
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+        <meta charset="utf-8">  
+        <title>Web Audio Sample</title>  
+        <meta name="description" content="Web Audio Sample">  
+        <script type="text/javascript" src="math.js"></script>
+        <script type="text/javascript" src="memory.js"></script>
+        <script type="text/javascript" src="loader.js"></script>
+        <script type="text/javascript" src="../SimpleSound.js"></script>
+        <style>
+            * {
+                border: 0px;
+                padding: 0px;
+                margin: 0px;
+                color: rgb(220, 220, 220);
+                text-decoration: none;
+                font-size: 14px;
+                font-family: monospace;
+            }
+
+            html, body {
+                min-height: 100% !important;
+                min-width: 100% !important;
+                height: 100%;
+                width: 100%;
+
+                background-color: rgb(0, 0, 0);
+                color: rgb(220, 220, 220);
+            }
+        </style>
+        <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAvW8cAP///wCjoJ0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREREQAAAAAiIiIiAAAAACIiIiIAAAAAIiIiIgAAAAAiIiIiAAAAACIiIiIAAAAAAAAAAAAAAAAAAAAAAAAAAAMzMzAAAAAAAzMAMAAAAAADMwAwAAAAAAMzADAAAAAAAAAAAAAAAAAAAAAAAAD//wAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADABwAAwA8AAP//AAD//wAA" rel="icon" type="image/x-icon" />
+        <script type="text/javascript">
+            var memory = null;
+            var math = null;
+            var loader = null;
+            var program = null; // WebAssembly.WebAssemblyInstantiatedSource
+            var sample_ptr = null;
+            var lastTime = null;
+            var sound = null;
+
+            function Update() {
+                let thisTime = performance.now();
+                let deltaTime = (thisTime - lastTime) * 0.001;
+                lastTime = thisTime;
+
+                program.instance.exports.UpdateSample(sample_ptr, deltaTime);
+            }
+
+            function Initialize() {
+                let importObject = {
+                    module: {},
+                    env: { }
+                };
+
+                memory = new MemoryAllocator(1024 * 1024 * 128, importObject);
+                math = new WasmMath(importObject);
+                loader = new FileLoader(importObject);
+                sound = new SimpleSound(importObject, memory.wasmMemory, 48000.0 * (50.0 / 1000.0));
+
+                WebAssembly.instantiateStreaming(fetch('AudioSample.debug.wasm'), importObject).then(prog => {
+                    program = prog;
+
+                    memory.AttachToWasmInstance(program.instance);
+                    sound.AttachToWasmInstance(program.instance);
+                    loader.EnableCallbacks(program.instance, memory.wasmMemory);
+                    
+                    {
+                        // Dumb html stuff here
+                    }
+
+                    sample_ptr = program.instance.exports.StartSample();
+
+                    lastTime = performance.now();
+                    window.setInterval(Update, 16);
+                });
+            }
+
+            function PlaySound(index) {
+                program.instance.exports.WasmSample_PlaySound(index); // TODO: Make that function, play the insturment
+            }
+        </script>
+    </head>  
+    <body>
+        <div id="init_everything">
+            <a href="#" onclick="Initialize();return false;">Initialize Audio</a>
+        </div>
+        <div id="play_controls">
+            <a href="#" onclick="PlaySound(0);return false;">Play Piano</a>,
+            <a href="#" onclick="PlaySound(1);return false;">Play Voice</a>,
+            <a href="#" onclick="PlaySound(2);return false;">Play Game</a>
+        </div>
+        <!--
+        <div id="loop_controls">
+            <a href="#" onclick="return false;">Loop Piano</a>,
+            <a href="#" onclick="return false;">Loop Voice</a>,
+            <a href="#" onclick="return false;">Loop Game</a>
+        </div>
+        -->
+        <!--
+            TODO: Sound Volume and pan sliders
+        -->
+        <!--
+            TODO: Channel Volume and pan sliders
+        -->
+    </body>  
+</html>
